@@ -30,7 +30,10 @@ def read_file(header=False):
     rows = []
     with open("credentials.csv", 'r') as file:
         csvreader = csv.reader(file)
-        h = next(csvreader)
+        try:
+            h = next(csvreader)
+        except StopIteration:
+            return [["None", "None"]]
         for row in csvreader:
             rows.append(row)
     if header:
@@ -87,7 +90,7 @@ def make_window():
     if not theme:
         theme = sg.OFFICIAL_PYSIMPLEGUI_THEME
     sg.theme(theme)
-    sg.theme("DefaultNoMoreNagging")
+
     layout = [
         [sg.T("Credentials", font=("Ariel", 20)), sg.B(" ", visible=False, disabled=True)],
         [sg.T("Sender Address: {}".format(Space(2))),
@@ -272,4 +275,15 @@ def send_mail(value, n=1):
 
 
 if __name__ == '__main__':
+    try:
+        with open("credentials.csv", "r") as file: pass
+    except FileNotFoundError:
+        with open("credentials.csv", "w+") as file:
+            pass
+    try:
+        with open("receivers.txt", "r") as file:
+            pass
+    except FileNotFoundError:
+        with open("receivers.txt", "w+") as file:
+            pass
     make_window()
