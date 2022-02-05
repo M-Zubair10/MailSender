@@ -19,7 +19,7 @@ def Space(n):
     return " " * n
 
 
-def write_file(email="imuhammadzubair207@gmail.com", password="appsamle10"):
+def write_file(email, password):
     with open("credentials.csv", "w+", newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Email", "Password"])
@@ -127,6 +127,7 @@ def make_window():
             sys.exit()
         elif event == "Send":
             send_mail(value)
+            print("[Success] Sent")
         elif event == "MultiSend":
             sub_event, sub_value = sg.Window("MultiSend", [
                 [sg.T("How many times you want to send this message")],
@@ -134,7 +135,9 @@ def make_window():
                 [sg.Ok(size=(8, 1)), sg.B("Cancel", size=(8, 1))]
             ]).read(close=True)
             if sub_event == "Ok":
-                send_mail(value, int(sub_value["-IN-"]))
+                for t in range(int(sub_value["-IN-"])):
+                    send_mail(value, t)
+                    print(f"[Success] Sent {t}th message")
         elif event == "-SENDER-":
             sub_event, sub_value = sg.Window("New Sender", [
                 [sg.T("Add new sending address")],
@@ -191,13 +194,13 @@ def make_window():
         window["-RECEIVE-"].update(read_receiver_addresses())
 
 
-def send_mail(value, n=1):
+def send_mail(value, t=""):
     orig_message = ""
     sender_email = read_file()[0][0]
     receiver_email = read_receiver_addresses()
     password = read_file()[0][1]
     message = MIMEMultipart("alternative")
-    message["Subject"] = value["-SUBJECT-"]
+    message["Subject"] = value["-SUBJECT-"]+str(t)
     message["From"] = sender_email
     message["To"] = "\n".join(receiver_email)
 
@@ -221,6 +224,10 @@ def send_mail(value, n=1):
             i[-1] = "</b>"
             i.pop(-2)
             i = "".join(i)
+        elif i == "\n":
+            i = i.replace("\n", "<br>")
+        else:
+            i = i + " "
         orig_message += i
 
     if attachments:
@@ -255,7 +262,7 @@ def send_mail(value, n=1):
         </p>
       </body>
     </html>
-    """.format(str(orig_message))
+    """.format(orig_message)
 
     # Turn these into plain/html MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -270,8 +277,7 @@ def send_mail(value, n=1):
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         server.login(sender_email, password)
-        for i in range(n):
-            server.sendmail(sender_email, receiver_email, message.as_string())
+        server.sendmail(sender_email, receiver_email, message.as_string())
 
 
 if __name__ == '__main__':
